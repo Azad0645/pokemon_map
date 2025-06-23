@@ -57,6 +57,18 @@ def show_all_pokemons(request):
 
 
 def show_pokemon(request, pokemon_id):
+    def build_evolution_dict(pokemon_obj):
+        if not pokemon_obj:
+            return None
+        return {
+            'pokemon_id': pokemon_obj.id,
+            'title_ru': pokemon_obj.title,
+            'img_url': (
+                request.build_absolute_uri(pokemon_obj.image.url)
+                if pokemon_obj.image else DEFAULT_IMAGE_URL
+            )
+        }
+
     pokemon = get_object_or_404(Pokemon, id=pokemon_id)
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
 
@@ -68,28 +80,8 @@ def show_pokemon(request, pokemon_id):
         add_pokemon(folium_map, entity.lat, entity.lon, image_url)
 
     next_evolution = pokemon.next_evolutions.first()
-    next_evolution_dict = None
-    if next_evolution:
-        next_evolution_dict = {
-            'pokemon_id': next_evolution.id,
-            'title_ru': next_evolution.title,
-            'img_url': (
-                request.build_absolute_uri(next_evolution.image.url)
-                if next_evolution.image else DEFAULT_IMAGE_URL
-            )
-        }
-
-    previous_evolution = pokemon.evolved_from
-    previous_evolution_dict = None
-    if previous_evolution:
-        previous_evolution_dict = {
-            'pokemon_id': previous_evolution.id,
-            'title_ru': previous_evolution.title,
-            'img_url': (
-                request.build_absolute_uri(previous_evolution.image.url)
-                if previous_evolution.image else DEFAULT_IMAGE_URL
-            )
-        }
+    next_evolution_dict = build_evolution_dict(next_evolution)
+    previous_evolution_dict = build_evolution_dict(pokemon.evolved_from)
 
     pokemon_dict = {
         'pokemon_id': pokemon.id,
